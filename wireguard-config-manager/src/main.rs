@@ -91,3 +91,10 @@ fn main() {
         }
     }
 }
+#[derive(Debug, Deserialize)]
+struct WireGuardConfig {
+    #[serde(rename = "Interface")]
+    interface: InterfaceConfig,
+    #[serde(rename = "Peer")]
+    peer: Vec<PeerConfig>, // This expects a list/array of peers
+}
