@@ -24,3 +24,15 @@ fn main() {
     let config: WireGuardConfig = toml::from_str(&config_content).expect("Failed to parse");
     println!("{:?}", config);
 }
+
+// ... (previous code) ...
+        }
+    }
+}
+#[derive(Debug, Deserialize)] // This is line 94
+struct WireGuardConfig {      // This is line 95 - the duplicate!
+    #[serde(rename = "Interface")]
+    interface: InterfaceConfig,
+    #[serde(rename = "Peer")]
+    peer: Vec<PeerConfig>, // This expects a list/array of peers
+}
