@@ -1,8 +1,13 @@
 import numpy as np
+from sklearn.ensemble import IsolationForest
 
-latency_samples = np.array([30, 32, 40, 200, 35, 38, 250])  # Example values
-threshold = np.mean(latency_samples) + 2 * np.std(latency_samples)
-anomalies = [x for x in latency_samples if x > threshold]
+# Sample network latency data
+latency_samples = np.array([20, 22, 19, 18, 21, 50, 23, 22, 19, 17])
 
-if anomalies:
-    print(f"🚨 Traffic Spikes Detected: {anomalies}")
+# Train anomaly detection model
+model = IsolationForest(contamination=0.1)
+model.fit(latency_samples.reshape(-1, 1))
+
+# Predict anomalies
+anomalies = model.predict(latency_samples.reshape(-1, 1))
+print("Anomalies detected:", latency_samples[anomalies == -1])
