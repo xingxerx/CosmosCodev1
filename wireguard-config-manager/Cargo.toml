@@ -1,24 +1,12 @@
+# f:\CosmosCode\wireguard-config-manager\Cargo.toml
 [package]
 name = "wireguard-config-manager"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
-serde = { version = "1.0", features = ["derive"] }
-toml = "0.8"
-tokio = { version = "1", features = ["full"] }
+# ... your dependencies ...
 
-[package]
-name = "wireguard-config-manager"
-version = "0.1.0"
-edition = "2024"
-
-[bin]
-wireguard-config-manager = "src/main.rs"
-
-[dependencies]
-serde = { version = "1.0", features = ["derive"] }
-toml = "0.8"
-tokio = { version = "1", features = ["full"] }
-
-
+# This would be the duplicate causing the error if it's at line 11
+[package] 
+# ... more package stuff ...
