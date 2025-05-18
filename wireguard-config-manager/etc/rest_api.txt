@@ -1,0 +1,4 @@
+{
+  "network_health": { "latency": "20ms", "bandwidth_usage": "1.5GB/s", "alerts": ["High congestion on Node B"] },
+  "wireguard_status": { "active_peers": 4, "peer_A_latency": "12ms", "peer_B_latency": "22ms" }
+}
