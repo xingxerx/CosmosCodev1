@@ -1,0 +1,6 @@
+{
+  "action": "prioritize",
+  "service": "WireGuard VPN",
+  "bandwidth_allocation": "80%",
+  "duration": "5 minutes"
+}
