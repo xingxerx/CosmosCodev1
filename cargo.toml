@@ -6,3 +6,8 @@ edition = "2021" # Or your preferred Rust edition
 [[bin]]
 name = "CGX-OMNI-ARCHIVE"
 path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.7"  # To parse WireGuard configuration files
+tokio = { version = "1", features = ["full"] } # For async networking
