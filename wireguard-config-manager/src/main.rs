@@ -1,111 +1,76 @@
-use std::fs;
-use std::process::Command;
-use std::str;
-use serde::Deserialize; // Added for TOML parsing
+use tokio::process::Command;
+use tokio::time::{sleep, Duration};
+use reqwest::Client;
+use serde::Serialize;
+use std::error::Error;
+use std::env;
 
-// Structs for WireGuard configuration
-#[derive(Debug, Deserialize)]
-struct WireGuardConfig {
-    #[serde(rename = "Interface")]
-    interface: InterfaceConfig,
-    #[serde(rename = "Peer")]
-    peer: Vec<PeerConfig>,
+#[derive(Serialize)]
+struct TelegramMessage<'a> {
+    chat_id: &'a str,
+    text: &'a str,
 }
 
-#[derive(Debug, Deserialize)]
-struct InterfaceConfig {
-    #[serde(rename = "Address")]
-    address: String,
-    #[serde(rename = "PrivateKey")]
-    private_key: String,
-    #[serde(rename = "DNS")]
-    dns: Option<String>, // Making DNS optional
+async fn send_telegram_message(
+    client: &Client,
+    bot_token: &str,
+    chat_id: &str,
+    message: &str,
+) -> Result<(), reqwest::Error> {
+    let url = format!("https://api.telegram.org/bot{}/sendMessage", bot_token);
+    let payload = TelegramMessage { chat_id, text: message };
+    let response = client.post(&url).json(&payload).send().await?;
+    println!("Telegram response: {:?}", response);
+    Ok(())
 }
 
-fn scan_wifi_networks() {
-    println!("Scanning for Wi-Fi networks...");
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
+    // Load Telegram credentials from environment variables.
+    let bot_token = env::var("TG_BOT_TOKEN")
+        .expect("TG_BOT_TOKEN environment variable not set");
+    let chat_id = env::var("TG_CHAT_ID")
+        .expect("TG_CHAT_ID environment variable not set");
+        
+    let client = Client::new();
 
-    // This uses `nmcli`, which is common on Linux systems with NetworkManager.
-    let output_result = Command::new("nmcli")
-        .arg("dev")
-        .arg("wifi")
-        .arg("list")
-        .output();
+    loop {
+        // Run the "wg show" command asynchronously
+        let output = Command::new("wg")
+            .arg("show")
+            .output()
+            .await?;
 
-    match output_result {
-        Ok(output) => {
-            if output.status.success() {
-                let stdout_str = str::from_utf8(&output.stdout).unwrap_or("Failed to parse stdout from nmcli");
-                if stdout_str.trim().is_empty() {
-                    println!("No Wi-Fi networks found or Wi-Fi might be disabled.");
-                    println!("If you are running this in WSL (Windows Subsystem for Linux),");
-                    println!("note that direct Wi-Fi scanning via 'nmcli' can be problematic as it may not have access to the host's Wi-Fi hardware.");
-                    println!("Ensure your Wi-Fi adapter is enabled on the host and, if applicable, NetworkManager is active within your Linux environment.");
-                } else {
-                    println!("Available Wi-Fi Networks:\n{}", stdout_str);
-                    // For a more user-friendly display, you might want to parse this output further.
-                }
-            } else {
-                let stderr = str::from_utf8(&output.stderr).unwrap_or("Failed to parse stderr from nmcli");
-                eprintln!("Error scanning for Wi-Fi networks (nmcli exit code: {}).", output.status);
-                eprintln!("Details: {}", stderr);
-                println!("Please ensure 'nmcli' (NetworkManager) is installed and your Wi-Fi device is enabled and not blocked.");
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            println!("WireGuard status:\n{}", stdout);
+
+            // Demonstration condition: if the output does not contain "peer:"
+            if !stdout.contains("peer:") {
+                println!("No peers detected! Sending Telegram notification...");
+                send_telegram_message(
+                    &client,
+                    &bot_token,
+                    &chat_id,
+                    "Alert: No active peers detected on the WireGuard interface!",
+                )
+                .await?;
             }
+        } else {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            eprintln!("Error running wg show: {}", stderr);
+
+            // Optionally, notify about errors as well.
+            send_telegram_message(
+                &client,
+                &bot_token,
+                &chat_id,
+                &format!("Error running wg show: {}", stderr),
+            )
+            .await?;
         }
-        Err(e) => {
-            eprintln!("Failed to execute nmcli: {}", e);
-            println!("Please ensure 'nmcli' (NetworkManager) is installed and in your system's PATH.");
-        }
-    }
-}
-
-#[derive(Debug, Deserialize)]
-struct PeerConfig {
-    #[serde(rename = "PublicKey")]
-    public_key: String,
-    #[serde(rename = "Endpoint")]
-    endpoint: String,
-    #[serde(rename = "AllowedIPs")]
-    allowed_ips: Option<String>, // Making AllowedIPs optional
-}
-
-fn load_wireguard_config(file_path: &str) -> Result<WireGuardConfig, Box<dyn std::error::Error>> {
-    println!("\nLoading WireGuard configuration from {}...", file_path);
-    let config_content = fs::read_to_string(file_path)?;
-    let config: WireGuardConfig = toml::from_str(&config_content)?;
-    Ok(config)
-}
-
-fn main() {
-    println!("WireGuard Config Manager - Wi-Fi Scanner Feature");
-    scan_wifi_networks();
-
-    // Attempt to load and parse a WireGuard config file
-    // For now, let's assume it's named "wg0.conf" in the current directory
-    match load_wireguard_config("wg0.conf") {
-        Ok(config) => {
-            println!("Successfully loaded WireGuard configuration.\n");
-            println!("Interface Details:");
-            println!("  Address: {}", config.interface.address);
-            println!("  PrivateKey: {}", config.interface.private_key); // Note: Be careful printing private keys in real apps!
-            if let Some(dns) = &config.interface.dns {
-                println!("  DNS: {}", dns);
-            }
-
-            if let Some(first_peer) = config.peer.get(0) {
-                println!("\nFirst Peer Details:");
-                println!("  PublicKey: {}", first_peer.public_key);
-                println!("  Endpoint: {}", first_peer.endpoint);
-                if let Some(allowed_ips) = &first_peer.allowed_ips {
-                    println!("  AllowedIPs: {}", allowed_ips);
-                }
-            } else {
-                println!("\nNo peers configured.");
-            }
-        }
-        Err(e) => {
-            eprintln!("Error loading or parsing WireGuard config: {}", e);
-            eprintln!("Please ensure 'wg0.conf' exists in the current directory and is a valid TOML WireGuard configuration.");
-        }
+        
+        // Sleep for 10 seconds asynchronously before checking again.
+        sleep(Duration::from_secs(10)).await;
     }
 }
