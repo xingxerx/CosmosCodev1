@@ -1,5 +1,5 @@
 import re
-from qiskit import QuantumCircuit, execute
+from qiskit import QuantumCircuit, transpile  # No more 'execute'
 from qiskit_aer import Aer
 from qiskit.qasm2 import dumps
 
@@ -129,7 +129,7 @@ def main():
     message = '11'  # You can change this to '00', '01', or '10' as needed.
     qc = superdense_coding_circuit(message)
     
-    # Export the QASM representation.
+    # Export the circuit's QASM representation.
     qasm_str = dumps(qc)
     print("QASM Output:")
     print(qasm_str)
@@ -139,9 +139,12 @@ def main():
     print("\nBinary Translation:")
     print(binary_representation)
     
-    # Simulate the circuit to verify the decoded message.
+    # Simulate the circuit using the Aer simulator.
     backend = Aer.get_backend('qasm_simulator')
-    job = execute(qc, backend, shots=1024)
+    # Transpile the circuit for the backend.
+    transpiled_circuit = transpile(qc, backend)
+    # Run the circuit on the simulator.
+    job = backend.run(transpiled_circuit, shots=1024)
     counts = job.result().get_counts()
     print("\nSimulation Results (Decoded Message Distribution):")
     print(counts)
