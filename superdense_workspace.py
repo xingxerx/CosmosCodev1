@@ -1,5 +1,6 @@
 import re
-from qiskit import QuantumCircuit, Aer, execute
+from qiskit import QuantumCircuit, execute
+from qiskit_aer import Aer
 from qiskit.qasm2 import dumps
 
 # ====================================================
