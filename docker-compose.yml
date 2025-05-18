@@ -1,0 +1,6 @@
+version: '3'
+services:
+  cosmos-api:
+    build: .
+    ports:
+      - "8000:8000"
