@@ -18,7 +18,8 @@ struct InterfaceConfig {
     address: String,
     #[serde(rename = "PrivateKey")]
     private_key: String,
-    // We can add ListenPort, DNS, etc. here later if needed
+    #[serde(rename = "DNS")]
+    dns: Option<String>, // Making DNS optional
 }
 
 fn scan_wifi_networks() {
@@ -64,7 +65,8 @@ struct PeerConfig {
     public_key: String,
     #[serde(rename = "Endpoint")]
     endpoint: String,
-    // We can add AllowedIPs, PresharedKey, PersistentKeepalive here later
+    #[serde(rename = "AllowedIPs")]
+    allowed_ips: Option<String>, // Making AllowedIPs optional
 }
 
 fn load_wireguard_config(file_path: &str) -> Result<WireGuardConfig, Box<dyn std::error::Error>> {
@@ -82,8 +84,24 @@ fn main() {
     // For now, let's assume it's named "wg0.conf" in the current directory
     match load_wireguard_config("wg0.conf") {
         Ok(config) => {
-            println!("Successfully loaded WireGuard configuration:");
-            println!("{:#?}", config); // Pretty print the config
+            println!("Successfully loaded WireGuard configuration.\n");
+            println!("Interface Details:");
+            println!("  Address: {}", config.interface.address);
+            println!("  PrivateKey: {}", config.interface.private_key); // Note: Be careful printing private keys in real apps!
+            if let Some(dns) = &config.interface.dns {
+                println!("  DNS: {}", dns);
+            }
+
+            if let Some(first_peer) = config.peer.get(0) {
+                println!("\nFirst Peer Details:");
+                println!("  PublicKey: {}", first_peer.public_key);
+                println!("  Endpoint: {}", first_peer.endpoint);
+                if let Some(allowed_ips) = &first_peer.allowed_ips {
+                    println!("  AllowedIPs: {}", allowed_ips);
+                }
+            } else {
+                println!("\nNo peers configured.");
+            }
         }
         Err(e) => {
             eprintln!("Error loading or parsing WireGuard config: {}", e);
