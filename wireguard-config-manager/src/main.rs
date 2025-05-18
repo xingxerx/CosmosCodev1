@@ -14,9 +14,16 @@ fn scan_wifi_networks() {
     match output_result {
         Ok(output) => {
             if output.status.success() {
-                let stdout = str::from_utf8(&output.stdout).unwrap_or("Failed to parse stdout from nmcli");
-                println!("Available Wi-Fi Networks:\n{}", stdout);
-                // For a more user-friendly display, you'd parse this output.
+                let stdout_str = str::from_utf8(&output.stdout).unwrap_or("Failed to parse stdout from nmcli");
+                if stdout_str.trim().is_empty() {
+                    println!("No Wi-Fi networks found or Wi-Fi might be disabled.");
+                    println!("If you are running this in WSL (Windows Subsystem for Linux),");
+                    println!("note that direct Wi-Fi scanning via 'nmcli' can be problematic as it may not have access to the host's Wi-Fi hardware.");
+                    println!("Ensure your Wi-Fi adapter is enabled on the host and, if applicable, NetworkManager is active within your Linux environment.");
+                } else {
+                    println!("Available Wi-Fi Networks:\n{}", stdout_str);
+                    // For a more user-friendly display, you might want to parse this output further.
+                }
             } else {
                 let stderr = str::from_utf8(&output.stderr).unwrap_or("Failed to parse stderr from nmcli");
                 eprintln!("Error scanning for Wi-Fi networks (nmcli exit code: {}).", output.status);
