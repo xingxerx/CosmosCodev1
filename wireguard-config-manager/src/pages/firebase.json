@@ -1,0 +1,14 @@
+{
+  "hosting": {
+    "public": "y",     // or whichever folder contains your built Astro site
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [{
+      "source": "**",
+      "destination": "/index.html"
+    }]
+  }
+}

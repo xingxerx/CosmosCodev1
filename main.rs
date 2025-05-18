@@ -36,3 +36,30 @@ struct WireGuardConfig {      // This is line 95 - the duplicate!
     #[serde(rename = "Peer")]
     peer: Vec<PeerConfig>, // This expects a list/array of peers
 }
+
+use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct Message {
+    message: String,
+}
+
+#[get("/")]
+async fn index() -> impl Responder {
+    HttpResponse::Ok().json(Message {
+        message: "Hello from Rust API!".to_string(),
+    })
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    println!("Starting server at http://127.0.0.1:8080");
+    HttpServer::new(|| {
+        App::new()
+            .service(index)
+    })
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
+}

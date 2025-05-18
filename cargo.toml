@@ -11,3 +11,6 @@ path = "src/main.rs"
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.7"  # To parse WireGuard configuration files
 tokio = { version = "1", features = ["full"] } # For async networking
+actix-web = "4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
