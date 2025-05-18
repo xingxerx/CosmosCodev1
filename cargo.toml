@@ -1,3 +1,8 @@
+[package]
+name = "CGX-OMNI-ARCHIVE"
+version = "0.1.0"
+edition = "2021" # Or your preferred Rust edition
+
 [[bin]]
 name = "CGX-OMNI-ARCHIVE"
 path = "src/main.rs"
