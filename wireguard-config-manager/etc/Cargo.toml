@@ -1,0 +1,2 @@
+[dependencies]
+snmp = "0.2"
