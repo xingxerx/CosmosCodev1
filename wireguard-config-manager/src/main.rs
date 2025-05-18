@@ -2,8 +2,8 @@ use tokio::process::Command;
 use tokio::time::{sleep, Duration};
 use reqwest::Client;
 use serde::Serialize;
-use std::error::Error;
 use std::env;
+use std::error::Error;
 
 #[derive(Serialize)]
 struct TelegramMessage<'a> {
@@ -26,16 +26,16 @@ async fn send_telegram_message(
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    // Load Telegram credentials from environment variables.
+    // Ensure these environment variables are set:
     let bot_token = env::var("TG_BOT_TOKEN")
         .expect("TG_BOT_TOKEN environment variable not set");
     let chat_id = env::var("TG_CHAT_ID")
         .expect("TG_CHAT_ID environment variable not set");
-        
+
     let client = Client::new();
 
     loop {
-        // Run the "wg show" command asynchronously
+        // This example runs the "wg show" command every 10 seconds.
         let output = Command::new("wg")
             .arg("show")
             .output()
@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             let stdout = String::from_utf8_lossy(&output.stdout);
             println!("WireGuard status:\n{}", stdout);
 
-            // Demonstration condition: if the output does not contain "peer:"
+            // Simulated condition: if "peer:" is not found, notify.
             if !stdout.contains("peer:") {
                 println!("No peers detected! Sending Telegram notification...");
                 send_telegram_message(
@@ -59,8 +59,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         } else {
             let stderr = String::from_utf8_lossy(&output.stderr);
             eprintln!("Error running wg show: {}", stderr);
-
-            // Optionally, notify about errors as well.
             send_telegram_message(
                 &client,
                 &bot_token,
@@ -69,8 +67,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             )
             .await?;
         }
-        
-        // Sleep for 10 seconds asynchronously before checking again.
+
         sleep(Duration::from_secs(10)).await;
     }
 }
