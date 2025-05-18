@@ -1,4 +1,3 @@
-# Create api.py in F:\CosmosCode
 from fastapi import FastAPI
 
 app = FastAPI()
@@ -11,6 +10,6 @@ def root():
 def get_latency():
     return {"latency": "50ms"}  # Replace with real latency logic later
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    print("Shutting down gracefully...")
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
