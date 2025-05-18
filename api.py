@@ -8,7 +8,7 @@ def root():
 
 @app.get("/latency")
 def get_latency():
-    return {"latency": "50ms"}  # Replace with real latency logic later
+    return {"latency": "50ms"}
 
 if __name__ == "__main__":
     import uvicorn
